@@ -1,0 +1,53 @@
+/build*/
+build/
+install/
+build.1cmake/
+install.1cmake/
+*.swp
+*.swo
+*.pdf
+*~pre-commit-google.xml
+*~
+.~*
+.#*
+.DS_Store
+CMakeLists.txt.user
+*.pyc
+*-build/
+build-*/
+
+## ignore eclipse files
+*.project
+*.cproject
+*.settings
+*.ccache*
+## ignore android studio files
+.gradle/
+.idea/
+libs/
+obj/
+
+## ignore certain subdirectories
+#Android/
+
+Debug/
+Release/
+
+## ignore sublime workspace
+*.sublime-workspace
+*.creator.user
+*.pro.user
+*.orig
+
+## ignore clion things
+.idea/
+cmake-build-*/
+
+# ignore generated geomview files
+*.off
+
+nohup.out
+/.vscode
+
+# ignore visual studio cache files
+.vs
