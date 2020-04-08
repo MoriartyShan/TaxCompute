@@ -14,7 +14,7 @@ std::string GetVector(const std::vector<T>& vec) {
   std::stringstream ss;
   ss.precision(8);
   for (int i = 0; i < vec.size(); i++) {
-    ss << (std::to_string(vec[i]) + ",");
+    ss << ("[" + std::to_string(i) + "]=" +std::to_string(vec[i]) + "\n");
   }
   return ss.str();
 }
@@ -438,13 +438,16 @@ int main(int argc, char* argv[]) {
   google::ParseCommandLineFlags(&argc, &argv, false);
   google::InitGoogleLogging(argv[0]); // option --[also]logtostderr
 
+  FLAGS_log_prefix = false;
+
   PersonalReader informations(FLAGS_infomation);
 
   PersonSalaryInformation person(informations);
 
   auto month = person.MonthTaxs();
-  LOG(ERROR) << "Result\n" << person.AnnualTax();
-  LOG(ERROR) << "Each month:" << GetVector(month);
+  LOG(ERROR) << "\nWhole Year tax:\n" << person.AnnualTax();
+  LOG(ERROR) << "\nEach month tax:\n" << GetVector(month);
   LOG(ERROR) << "BeforeTaxAnualSalary = " << person.BeforeTaxAnualSalary() << " AfterTaxAnualSalary = " << person.AfterTaxAnualSalary();
+  system("pause");
   return 0;
 }
