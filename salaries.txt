@@ -1,24 +1,66 @@
-salarys
+#MonthSalary = 0,
+#SocialSecurityBase = 1,
+#TaxReduction = 2,
+#SocialSecirityRateCompany = 3,
+#SocialSecirityRatePersional = 4,
+#TotalArticals = 5
+
+#MonthSalary
+#月薪
+Artical:0
 #month range, value
-1,27362
-2,9904
-3-4,9504
-5-6,9624
-7,10624
-8,9984
+1, 27362
+2, 9904
+3-4, 9504
+5-6, 9624
+7, 10624
+8, 9984
 #smart
-9,8691.85
-10,15000
-11,13067.8
-12,12806.87
-social_security
+9, 8691.85
+10, 15000
+11, 13067.8
+12, 12806.87
+
+#SocialSecurityBase
+#社保基数
+Artical:1
 #month range, value
 1-6,6416.666667
 7-8,10191.66667
 9-12,15000
-reduction
+
+#TaxReduction
+#个税减免数
+Artical:2
 #month range, value
 1-8,0
 9-12,1500
+
+#SocialSecirityRateCompany
+#公司社保缴费比例
+Artical:3
+#month range, value
+#endowment_,medical_,maternity_,unemployment_,injury_,accumulation_
+#养老，医疗，生育，失业，工伤，公积金
+#Shanghai
+#1-12,0.21,0.09,0.01,0.02,0.005,0.12
+#Beijing
+1-12,0.16,0.1,0.008,0.008,0.001,0.12
+#Changchun
+#1-12,0.2,0.08,0.007,0.02,0.005,0.12
+
+#SocialSecirityRatePersional
+#个人社保缴费比例
+Artical:4
+#endowment_,medical_,maternity_,unemployment_,injury_,accumulation_
+#养老，医疗，生育，失业，工伤，公积金
+#Shanghai
+#1-12,0.08,0.02,0,0.01,0,0.12
+#Beijing
+1-12,0.08,0.02,0,0.02,0,0.12
+#Changchun
+#1-12,0.08,0.02,0,0.01,0,0.12
+
+
 
 

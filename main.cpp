@@ -7,6 +7,8 @@
 #include <set>
 #include<numeric>
 
+DEFINE_string(infomation, "./salaries.txt", "file path to your salary file");
+
 template <typename T>
 std::string GetVector(const std::vector<T>& vec) {
   std::stringstream ss;
@@ -16,107 +18,6 @@ std::string GetVector(const std::vector<T>& vec) {
   }
   return ss.str();
 }
-
-struct StageValue {
-  //from start to end, its value
-  int start = 0;
-  int end = 0;
-  double value = 0;
-  StageValue(){}
-  StageValue(const int start_, const int end_, const double value_):
-    start(start_), end(end_), value(value_){}
-};
-
-class PersonalReader {
-private:
-  std::vector<StageValue> salaries_;
-  std::vector<StageValue> social_security_bases_;
-  std::vector<StageValue> tax_reductions_;
-  std::vector<std::set<int>> test = {
-    std::set<int>({1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}), //salary
-    std::set<int>({1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}), //social base
-    std::set<int>({1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}) //tax_reductions_
-  };
-public:
-  PersonalReader(const std::string &path){
-    std::ifstream file(path);
-
-    const std::string s[3] = {"salarys", "social_security", "reduction"};
-    CHECK(file.is_open()) << "file: " << path << " not exist";
-    char bar;
-    std::string line;
-    int start, end;
-    double value;
-    std::vector<StageValue> *cur_ptr = nullptr;
-    std::set<int> *test_prt = nullptr;
-    while(!file.eof()) {
-      std::getline(file, line);
-      if (line.empty()) {
-        break;
-      }
-      if (line.front() == '#') {
-        continue;
-      }
-
-      if (line.front() == 's' || line.front() == 'r') {
-        if (line == s[0]) {
-          cur_ptr = &salaries_;
-          test_prt = &test[0];
-        } else if (line == s[1]) {
-          cur_ptr = &social_security_bases_;
-          test_prt = &test[1];
-        } else if (line == s[2]) {
-          cur_ptr = &tax_reductions_;
-          test_prt = &test[2];
-        } else {
-          LOG(FATAL) << "Wrong input mark(" << line << ")";
-        }
-        continue;
-      }
-
-      std::stringstream ss(line);
-
-      ss >> start;
-      ss >> bar;
-      if (bar == '-') {
-        ss >> end;
-        ss >> bar;
-      } else if (bar == ',') {
-        end = start;
-      } else {
-        LOG(FATAL) << "Invalid split (" << bar << ")";
-      }
-      ss >> value;
-      CHECK(start <= end && start >= 1) << "Wrong input (" << start << "," << end << ")";
-      for (int i = start; i <= end; i++) {
-        CHECK(test_prt->count(i) > 0) << "something appeared more than once(" << i << ")";
-        test_prt->erase(i);
-      }
-      cur_ptr->emplace_back(start, end, value);
-    }
-    file.close();
-    CHECK(isValid()) << "Not enough input month";
-  }
-
-  bool isValid() const {
-    for (int i = 0; i < test.size(); i++) {
-      if (test[i].size() > 0) return false;
-    }
-    return true;
-  }
-
-  const std::vector<StageValue> &social_bases() const {
-    return social_security_bases_;
-  }
-
-  const std::vector<StageValue> &salaries() const {
-    return salaries_;
-  }
-
-  const std::vector<StageValue> &reductions() const {
-    return tax_reductions_;
-  }
-};
 
 class SocialSecurity{
 public:
@@ -138,11 +39,10 @@ public:
     3000, //accumulation_
   };
 
-  std::vector<double> rate[2] = {
-    {0.16, 0.1, 0.008, 0.008, 0.001, 0.12}, //company
-    {0.08, 0.02, 0, 0, 0, 0.12} //yourself
-  };
+  std::vector<std::vector<double>> rate = Shanghai_standard_rate;
 
+  static std::vector<std::vector<double>> Beijing_standard_rate;
+  static std::vector<std::vector<double>> Shanghai_standard_rate;
   std::shared_ptr<std::vector<std::vector<double>>> security_;
 
   SocialSecurity(){
@@ -150,13 +50,11 @@ public:
   }
 
   SocialSecurity(const double _base){
-
     for (int i = 0; i < Tnumber; i++) {
       if (base[i] < _base) {
         base[i] = _base;
       }
     }
-
     Compute();
   }
 //  SocialSecurity(const std::vector<StageValue>& bases){
@@ -191,6 +89,140 @@ public:
     return security_;
   }
   double PersionalSecurityPayment() const {return (*security_)[1][Tnumber];}
+};
+
+std::vector<std::vector<double>> SocialSecurity::Beijing_standard_rate = {
+  {0.16, 0.1, 0.008, 0.008, 0.001, 0.12}, //company
+  {0.08, 0.02, 0, 0.02, 0, 0.12} //yourself
+  //endowment_,medical_,maternity_,unemployment_,injury_,accumulation_
+  //养老，医疗，生育，失业，工伤，公积金
+};
+std::vector<std::vector<double>> SocialSecurity::Shanghai_standard_rate = {
+  {0.21, 0.09, 0.01, 0.02, 0.005, 0.12}, //company
+  {0.08, 0.02, 0, 0.01, 0, 0.12} //yourself
+  //endowment_,medical_,maternity_,unemployment_,injury_,accumulation_
+  //养老，医疗，生育，失业，工伤，公积金
+};
+
+template <typename T>
+struct StageValue {
+  //from start to end, its value
+  int start = 0;
+  int end = 0;
+  T value;
+  StageValue(){}
+  StageValue(const int start_, const int end_, const T value_):
+    start(start_), end(end_), value(value_){}
+};
+using StageValued = StageValue<double>;
+using StageValueVectord = StageValue<std::vector<double>>;
+using VectorStageValued = std::vector<StageValued>;
+class PersonalReader {
+private:
+  enum Artical {
+    MonthSalary = 0,
+    SocialSecurityBase = 1,
+    TaxReduction = 2,
+    SocialSecirityRateCompany = 3,
+    SocialSecirityRatePersional = 4,
+    TotalArticals
+  };
+  std::vector<VectorStageValued> double_inputs_;/*MonthSalary, SocialSecurityBase, TaxReduction*/
+  std::vector<std::vector<StageValueVectord>> ssrates;/*SocialSecirityRateCompany, SocialSecirityRatePersional*/
+  std::vector<std::set<int>> record;
+public:
+  PersonalReader(const std::string &path){
+    std::ifstream file(path);
+    record.resize(TotalArticals, std::set<int>({1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}));
+    double_inputs_.resize(SocialSecirityRateCompany);
+    ssrates.resize((TotalArticals - SocialSecirityRateCompany));
+    const std::string artical_mode = "Artical:";
+    CHECK(file.is_open()) << "file: " << path << " not exist";
+    char bar;
+    std::string line;
+    int start, end;
+    double value;
+    std::vector<double> values(SocialSecurity::artical::Tnumber);
+    int article_id = -1;
+    while(!file.eof()) {
+      std::getline(file, line);
+      if (line.empty()) {
+        continue;
+      }
+      if (line.front() == '#') {
+        continue;
+      }
+
+      if (line.front() >= '0' && line.front() <= '9') {
+        std::stringstream ss(line);
+        ss >> start;
+        ss >> bar;
+        if (bar == '-') {
+          ss >> end;
+          ss >> bar;
+        } else if (bar == ',') {
+          end = start;
+        } else {
+          LOG(FATAL) << "Invalid split (" << bar << ")";
+        }
+        CHECK(start <= end && start >= 1) << "Wrong input (" << start << "," << end << ")";
+        if (article_id >=MonthSalary && article_id <= TaxReduction) {
+          ss >> value;
+          ss >> bar;
+          double_inputs_[article_id].emplace_back(start, end, value);
+        } else if (article_id >= SocialSecirityRateCompany && article_id <= SocialSecirityRatePersional){
+          for (int i = 0; i < SocialSecurity::artical::Tnumber; i++) {
+            ss >> values[i];
+            ss >> bar;
+          }
+          ssrates[(article_id - SocialSecirityRateCompany)].emplace_back(start, end, values);
+        } else {
+          LOG(FATAL) << "You must appoint a artical in the first(#not count) line";
+        }
+        //erase articals record
+        for (int i = start; i <= end; i++) {
+          CHECK(record[article_id].count(i) > 0) << "something appeared more than once(" << i << ")";
+          record[article_id].erase(i);
+        }
+
+      } else {
+        CHECK(line.substr(0, artical_mode.length()) == artical_mode) << "Wrong input line:" << line;
+        std::string left = line.substr(artical_mode.length());
+
+        std::stringstream ss(left);
+        ss >> article_id;
+        CHECK(article_id >= MonthSalary && article_id <= SocialSecirityRatePersional)
+            << "Wrong artical id" << article_id;
+      }
+
+    }
+    file.close();
+    CHECK(isValid()) << "Not enough input month";
+  }
+
+  bool isValid() const {
+    for (int i = 0; i < record.size(); i++) {
+      if (record[i].size() > 0) return false;
+    }
+    return true;
+  }
+
+  const VectorStageValued &social_bases() const {
+    return double_inputs_[Artical::SocialSecurityBase];
+  }
+
+  const VectorStageValued &salaries() const {
+    return double_inputs_[Artical::MonthSalary];
+  }
+
+  const VectorStageValued &reductions() const {
+    return double_inputs_[Artical::TaxReduction];
+  }
+
+  const std::vector<std::vector<StageValueVectord>>&
+      security_rates() const {
+    return ssrates;
+  }
 };
 
 #define MONTH_NUM 12
@@ -232,7 +264,7 @@ public:
   PersonSalaryInformation(
       const PersonalReader& personal) {
     CHECK(personal.isValid()) << "persional info is not valid";
-    UpdateSocialSecurity(personal.social_bases());
+    UpdateSocialSecurity(personal);
     UpdateReductions(personal.reductions());
     UpdateSalaries(personal.salaries());
     Compute();
@@ -246,15 +278,38 @@ public:
     annual_security_output_ = securities_[0]->PersionalSecurityPayment() * MONTH_NUM;
   }
 
-  void UpdateSocialSecurity(const std::vector<StageValue>& persional_bases) {
+  void UpdateSocialSecurity(const PersonalReader &personal) {
     securities_.resize(MONTH_NUM);
     annual_security_output_ = 0;
-    for (int i = 0; i < persional_bases.size(); i++) {
-      for (int j = (persional_bases[i].start - 1); j <= (persional_bases[i].end - 1); j++) {
-        securities_[j] = std::make_shared<SocialSecurity>(persional_bases[i].value);
-        annual_security_output_ += securities_[j]->PersionalSecurityPayment();
+    //security base
+    {
+      auto security_bases = personal.social_bases();
+      for (int i = 0; i < security_bases.size(); i++) {
+        for (int j = (security_bases[i].start - 1); j <= (security_bases[i].end - 1); j++) {
+          securities_[j] = std::make_shared<SocialSecurity>(security_bases[i].value);
+
+        }
       }
     }
+    auto rates = personal.security_rates();
+    for (int i = 0; i < rates[0].size(); i++) {
+      for (int j = (rates[0][i].start - 1); j <= (rates[0][i].end - 1); j++) {
+        securities_[j]->rate[0] = (rates[0][i].value);
+      }
+    }
+
+    for (int i = 0; i < rates[1].size(); i++) {
+      for (int j = (rates[1][i].start - 1); j <= (rates[1][i].end - 1); j++) {
+        securities_[j]->rate[1] = (rates[1][i].value);
+      }
+    }
+
+    for (int i = 0; i < securities_.size(); i++) {
+      securities_[i]->Compute();
+      annual_security_output_ += securities_[i]->PersionalSecurityPayment();
+    }
+
+
   }
 
   void UpdateReductions(const double reduction) {
@@ -267,7 +322,7 @@ public:
     each_month_reductions = reductions;
   }
 
-  void UpdateReductions(const std::vector<StageValue>& reductions) {
+  void UpdateReductions(const std::vector<StageValued>& reductions) {
     each_month_reductions.resize(MONTH_NUM, 0);
     for (int i = 0; i < reductions.size(); i++) {
       for (int j = reductions[i].start - 1; j <= (reductions[i].end - 1); j++) {
@@ -292,7 +347,7 @@ public:
     LOG(ERROR) << "before = " << before_tax_annual_salary_;
   }
 
-  void UpdateSalaries(const std::vector<StageValue>& salaries) {
+  void UpdateSalaries(const std::vector<StageValued>& salaries) {
     each_month_salaries.resize(MONTH_NUM, 0);
     before_tax_annual_salary_ = 0;
     for (int i = 0; i < salaries.size(); i++) {
@@ -377,19 +432,16 @@ public:
 
 };
 
-
-
 int main(int argc, char* argv[]) {
   google::SetVersionString("1.0.0");
   google::SetUsageMessage(std::string(argv[0]) + " [OPTION]");
   google::ParseCommandLineFlags(&argc, &argv, false);
   google::InitGoogleLogging(argv[0]); // option --[also]logtostderr
 
-  PersonalReader informations("../salaries.txt");
+  PersonalReader informations(FLAGS_infomation);
 
   PersonSalaryInformation person(informations);
-//  person.SetBaselineLowest();
-//  person.Compute();
+
   auto month = person.MonthTaxs();
   LOG(ERROR) << "Result\n" << person.AnnualTax();
   LOG(ERROR) << "Each month:" << GetVector(month);
