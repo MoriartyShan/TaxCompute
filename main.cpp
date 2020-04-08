@@ -181,11 +181,9 @@ public:
         if (Medical == j && i == 1) {
           res[i][j] += 3;
         }
-        LOG(ERROR) << "[" << i << "][" << j << "]=" << res[i][j];
         res[i][Tnumber] += res[i][j];
       }
     }
-    LOG(ERROR) << GetVector(res[1]);
     return;
   }
 
@@ -281,6 +279,7 @@ public:
 
   void UpdateSalaries(const double salary) {
     before_tax_annual_salary_ = salary * MONTH_NUM;
+    LOG(ERROR) << "before = " << before_tax_annual_salary_;
     each_month_salaries.resize(MONTH_NUM, salary);
   }
 
@@ -289,14 +288,17 @@ public:
         << "reductions size must be 12 (currently is " << _salaries.size() << ")";
     each_month_salaries = _salaries;
     before_tax_annual_salary_ =
-        std::accumulate(each_month_salaries.begin(), each_month_salaries.end(), 0);
+        std::accumulate(each_month_salaries.begin(), each_month_salaries.end(), 0.0);
+    LOG(ERROR) << "before = " << before_tax_annual_salary_;
   }
 
   void UpdateSalaries(const std::vector<StageValue>& salaries) {
     each_month_salaries.resize(MONTH_NUM, 0);
+    before_tax_annual_salary_ = 0;
     for (int i = 0; i < salaries.size(); i++) {
       for (int j = (salaries[i].start - 1); j <= (salaries[i].end - 1); j++) {
         each_month_salaries[j] = salaries[i].value;
+        before_tax_annual_salary_ += each_month_salaries[j];
       }
     }
   }
@@ -373,7 +375,6 @@ public:
     return after_tax_annual_salary_;
   }
 
-//  double
 };
 
 
